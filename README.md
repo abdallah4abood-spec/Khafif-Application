@@ -184,7 +184,7 @@ Targets (not yet measured): list requests limited to 12 items with only the fiel
 | M3 Catalog | Implemented, not yet verified against a live backend |
 | M4 Cart | Implemented, logic tests passing, device behavior not verified |
 | M5 Checkout | Implemented, SDK usage checked against Medusa 2.22.1 types, live run not verified |
-| M6 Tests and CI | Type check and lint passing; CI workflow written but not yet run on GitHub |
+| **M6 Quality / CI** | **Done for the mobile app.** `tsc --noEmit`, `expo lint` and 38 Jest tests pass on GitHub Actions (workflow "Mobile checks", commit `42f09f0`, Node 24). Backend integration tests are not in CI. Lockfile fix: `7134ff9`. |
 | M7 Wishlist (custom Medusa module) | Not started (optional) |
 
 Detailed evidence, gaps and the re-verification checklist: [`docs/STATUS.md`](docs/STATUS.md).

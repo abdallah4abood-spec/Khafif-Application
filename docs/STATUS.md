@@ -18,7 +18,7 @@ This file separates three levels of evidence. Do not read "Implemented" as "work
 | **M3 Catalog** | **Implemented** | Per the agent log: product list from Medusa (page size 12, search debounced 400 ms, category filter), product detail with variants, `expo-image`, TanStack Query persisted cache for catalog keys. No evidence in the log of dedicated catalog tests or of running it against a live backend. |
 | **M4 Cart** | **Implemented, partly tested** | Per the agent log: Zustand cart persisted as `khafif.cart.v1`, merge by variant, stock-based quantity limits, local-first with Medusa sync when checkout starts. Cart/checkout logic tests: **10 cases passed** in a targeted run. Restart persistence and offline behavior **not verified on a device**. |
 | **M5 Checkout** | **Implemented, not verified live** | Per the agent log: guest email + address form, flat shipping options from the backend, payment provider looked up at runtime (`pp_system_default`), single-submit lock, idempotency key on `complete`, confirmation screen using server-confirmed totals. Calls were checked against the installed 2.22.1 SDK **type definitions** (e.g. `complete(cartId, {}, headers)`), **not against a running server through the app**. The server-side flow itself is proven by the M1 smoke test. |
-| **M6 Quality / CI** | **Partly done** | `tsc --noEmit` clean and lint clean after the `@medusajs/types` fix (agent log). A GitHub Actions workflow was added for the actual npm setup but **has never run on GitHub**. The agent added further tests (checkout UI, CI) after the last passing run, and the session ended while the **full suite** was being re-run, so a green full run after the final changes is **not confirmed**. |
+| **M6 Quality / CI** | **Done for the mobile app.** `tsc --noEmit`, `expo lint` and 38 Jest tests pass on GitHub Actions (workflow "Mobile checks", commit `42f09f0`, Node 24). Backend integration tests are not in CI. Lockfile fix: `7134ff9`. |
 | **M7 Wishlist** | Not started | Optional stretch (custom Medusa module, routes, login). |
 
 ## Re-verification checklist (owner's machine, in this order)
@@ -30,8 +30,7 @@ This file separates three levels of evidence. Do not read "Implemented" as "work
 4. `npx expo start`; walk the full journey on the web build first, then on a phone through Expo Go: list -> detail -> add to cart -> change quantity -> checkout -> shipping -> test payment -> confirmation. Check the order in Medusa Admin.
 5. Airplane-mode pass: cached list shows, cart editable, checkout disabled with an explanation. Restart the app: cart restored.
 6. Switch ar <-> en: direction and strings correct, no clipped text at 130% font scale.
-7. Push to GitHub and confirm the workflow runs green before adding any CI badge.
-
+7. Done: "Mobile checks" is green on GitHub for commit 42f09f0.
 ## Known gaps and risks
 
 - No end-to-end run of M3–M5 against a live backend through the app is on record.
