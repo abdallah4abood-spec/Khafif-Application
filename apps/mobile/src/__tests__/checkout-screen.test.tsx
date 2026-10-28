@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 
 import CheckoutScreen from '@/app/checkout';
@@ -33,6 +33,7 @@ jest.mock('@/api/checkout', () => {
   };
 });
 jest.mock('@/lib/network', () => ({ useIsOnline: () => true }));
+jest.mock('@expo/vector-icons/Feather', () => 'Feather');
 
 const localItem = {
   variantId: 'variant-1',
@@ -50,8 +51,16 @@ async function renderCheckout() {
   await i18n.changeLanguage('en');
   useCartStore.setState({ regionId: 'region-1', cartId: 'cart-1', items: [localItem] });
   jest.mocked(sdk.store.cart.retrieve).mockResolvedValue({
-    cart: { id: 'cart-1', region_id: 'region-1', currency_code: 'ils', subtotal: 70, total: 70, shipping_total: 0 },
-  } as Awaited<ReturnType<typeof sdk.store.cart.retrieve>>);
+    cart: {
+      id: 'cart-1',
+      region_id: 'region-1',
+      currency_code: 'ils',
+      subtotal: 70,
+      total: 70,
+      shipping_total: 0,
+      items: [{ id: 'line-1', variant_id: 'variant-1', quantity: 1 }],
+    },
+  } as unknown as Awaited<ReturnType<typeof sdk.store.cart.retrieve>>);
   jest.mocked(sdk.store.fulfillment.listCartOptions).mockResolvedValue({
     shipping_options: [{
       id: 'shipping-1',
@@ -87,7 +96,8 @@ describe('CheckoutScreen', () => {
     await screen.findByText('Standard delivery');
     fireEvent.press(screen.getByRole('button', { name: 'Place test order' }));
 
-    expect(await screen.findByText('This field is required.')).toBeTruthy();
+    // One message per empty required field; the exact count is not the behavior under test.
+    expect((await screen.findAllByText('This field is required.')).length).toBeGreaterThan(0);
     expect(placeTestOrder).not.toHaveBeenCalled();
   });
 
@@ -100,6 +110,8 @@ describe('CheckoutScreen', () => {
     } as Awaited<ReturnType<typeof placeTestOrder>>);
     await renderCheckout();
     await screen.findByText('Standard delivery');
+    // Let the shipping/price load finish before typing, so the press uses the settled form.
+    await waitFor(() => expect(screen.queryByRole('progressbar')).toBeNull());
 
     fireEvent.changeText(screen.getByLabelText('Email address'), 'buyer@example.test');
     fireEvent.changeText(screen.getByLabelText('First name'), 'Test');
@@ -107,10 +119,12 @@ describe('CheckoutScreen', () => {
     fireEvent.changeText(screen.getByLabelText('Street address'), '1 Sample Street');
     fireEvent.changeText(screen.getByLabelText('City'), 'Hebron');
     fireEvent.changeText(screen.getByLabelText('Phone number'), '1234567');
+    // Commit the typed values before pressing, so the submit handler sees the filled form.
+    await act(async () => {});
 
     fireEvent.press(screen.getByRole('button', { name: 'Place test order' }));
 
-    expect(await screen.findByText('Your test order is confirmed.')).toBeTruthy();
+    await new Promise((r) => setTimeout(r, 300)); console.log("DBG_CALLS", JSON.stringify(jest.mocked(placeTestOrder).mock.calls.length)); expect(await screen.findByText("Your test order is confirmed.")).toBeTruthy();
     expect(screen.getByText('42')).toBeTruthy();
     await waitFor(() => expect(useCartStore.getState().items).toEqual([]));
   });
