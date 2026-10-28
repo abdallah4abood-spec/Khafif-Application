@@ -1,0 +1,10 @@
+# 13 — Decisions Addendum (changes vs. the original pack, with reasons)
+
+Original documents remain the source of truth; these are the deliberate, evidence-based deviations found while implementing.
+
+- **ADR-7 Language/RTL switch without reload.** Expo's localization guide states runtime `I18nManager.forceRTL` does not work in Expo Go (it resets RTL prefs), which would break ADR-4 (Expo Go only). Implemented instead: `direction` style on the root `View` + `LocaleProvider` (expo-router) + our own `isRTL` from the resolved locale (never `I18nManager.isRTL`). Verified on react-native-web (tabs, alignment, chips mirror in ar and flip back in en). **Not yet verified on a physical phone** — do this in M2 manual checks. Supersedes the "reload" sentence in docs/05.
+- **ADR-8 Medusa scaffold flattened.** `create-medusa-app` (2.22.1) now generates a Turborepo (`backend/apps/backend`, optional Next.js storefront). Flattened to a single independent npm project at `apps/backend` (ADR-3). Template demo seeds (EUR apparel, Next.js store-policy migration) removed; replaced by `src/scripts/seed.ts` (ILS, 4 categories, 16 sample products, idempotent).
+- **ADR-9 Routes live in `src/app/`.** The SDK 58 Expo template uses `src/app`, not `app/` (docs/01 tree). Same Expo Router rules; paths in docs map 1:1 under `src/`.
+- **ADR-10 Bilingual catalog data.** Medusa has no per-locale product fields in this MVP. English lives in `title`/`description`; Arabic in `metadata.title_ar`, `description_ar`, `option_ar`, and categories' `metadata.name_ar`. The app picks by locale and falls back to English. Cheap, no extra module.
+- **ADR-11 Local image URLs are absolute.** Medusa's local file provider stores `BACKEND_URL/static/...` at upload time. Set `BACKEND_URL` to the LAN IP **before** `npm run seed`, or re-seed after changing it (`.env.example` explains).
+- **Sandbox note (not a project decision).** Verification here used a local PostgreSQL 16 because Docker was unavailable; `infra/docker-compose.yml` is provided but unexecuted.
